@@ -61,6 +61,10 @@
                 .then((newCredentialInfo) => {
                     alert('Open your browser console!')
                     console.log('SUCCESS', newCredentialInfo)
+                    console.log('ClientDataJSON: ', bufferToString(newCredentialInfo.response.clientDataJSON))
+                    let attestationObject = CBOR.decode(newCredentialInfo.response.attestationObject);
+                    console.log('AttestationObject: ', attestationObject)
+                    console.log('AuthData: ', parseAuthData(attestationObject.authData))
                 })
                 .catch((error) => {
                     alert('Open your browser console!')
@@ -68,5 +72,7 @@
                 })
         }
     </script>
+    <script src="../lib/cbor.js"></script>
+    <script src="../lib/helpers.js"></script>
 </body>
 </html>
