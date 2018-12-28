@@ -36,9 +36,9 @@
             window.crypto.getRandomValues(challenge);
 
             var serverID = 'Kosv9fPtkDoh4Oz7Yq/pVgWHS8HhdlCto5cR0aBoVMw='
-            var id = Uint8Array.from(window.atob(base64id), c=>c.charCodeAt(0))
+            var id = Uint8Array.from(window.atob(serverID), c=>c.charCodeAt(0))
 
-            var publicKey new PublicKeyCredential({
+            var publicKey = {
                 challenge: challenge,
 
                 rp: {
@@ -55,13 +55,15 @@
                     { 'type': 'public-key', 'alg': -7  },
                     { 'type': 'public-key', 'alg': -257 }
                 ]
-            })
+            }
 
-            navigator.credentials.create(publicKey)
+            navigator.credentials.create({ 'publicKey': publicKey })
                 .then((newCredentialInfo) => {
+                    alert('Open your browser console!')
                     console.log('SUCCESS', newCredentialInfo)
                 })
                 .catch((error) => {
+                    alert('Open your browser console!')
                     console.log('FAIL', error)
                 })
         }
