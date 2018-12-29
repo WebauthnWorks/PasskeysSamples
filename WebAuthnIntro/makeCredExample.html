@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>MakeCredential Example</title>
+    <title>MakeCredential Example with attestation Direct</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <!-- Ensure use of most common Unicode characters -->
     <meta charset="utf-8">
@@ -20,7 +20,7 @@
             <div class="column col-4 text-center">
                 <div class="card">
                     <div class="card-body">              
-                        <button class="btn btn-primary" onclick="makeCredsSample()">Make Credentials</button>
+                        <button class="btn btn-primary" onclick="makeCredsSample()">Make Credentials with attestation Direct</button>
                     </div><!-- .card-body --> 
                 </div><!-- .card -->
             </div>
@@ -54,7 +54,9 @@
                 'pubKeyCredParams': [
                     { 'type': 'public-key', 'alg': -7  },
                     { 'type': 'public-key', 'alg': -257 }
-                ]
+                ],
+
+                'attestation': 'direct'
             }
 
             navigator.credentials.create({ 'publicKey': publicKey })
