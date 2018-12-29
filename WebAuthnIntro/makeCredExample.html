@@ -64,7 +64,10 @@
                     console.log('ClientDataJSON: ', bufferToString(newCredentialInfo.response.clientDataJSON))
                     let attestationObject = CBOR.decode(newCredentialInfo.response.attestationObject);
                     console.log('AttestationObject: ', attestationObject)
-                    console.log('AuthData: ', parseAuthData(attestationObject.authData))
+                    let authData = parseAuthData(attestationObject.authData);
+                    console.log('AuthData: ', authData);
+                    console.log('CredID: ', bufToHex(authData.credID));
+                    console.log('PublicKey', CBOR.decode(authData.COSEPubKey));
                 })
                 .catch((error) => {
                     alert('Open your browser console!')
