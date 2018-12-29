@@ -67,7 +67,7 @@
                     let authData = parseAuthData(attestationObject.authData);
                     console.log('AuthData: ', authData);
                     console.log('CredID: ', bufToHex(authData.credID));
-                    console.log('PublicKey', CBOR.decode(authData.COSEPublicKey));
+                    console.log('PublicKey', CBOR.decode(authData.COSEPublicKey.buffer));
                 })
                 .catch((error) => {
                     alert('Open your browser console!')
