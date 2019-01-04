@@ -57,7 +57,7 @@
                 ]
             }
 
-            navigator.credentials.create({ 'publicKey': publicKey })
+            return navigator.credentials.create({ 'publicKey': publicKey })
                 .then((newCredentialInfo) => {
                     alert('SUCCESSFULLY CREATED A CREDENTIAL')
                     console.log('SUCCESSFULLY CREATED A CREDENTIAL', newCredentialInfo)
@@ -82,7 +82,7 @@
             var challenge = new Uint8Array(32);
             window.crypto.getRandomValues(challenge);
 
-            makeCredsSample()
+            return makeCredsSample()
                 .then((credentialId) => {
                     var publicKey = {
                         challenge: challenge,
