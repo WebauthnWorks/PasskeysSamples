@@ -95,8 +95,8 @@
                     return navigator.credentials.get({ 'publicKey': publicKey })
                 })
                 .then((getAssertionResponse) => {
-                    alert('SUCCESSFULLY GOT ASSERTION! Open your browser console!')
-                    console.log('SUCCESS', getAssertionResponse)
+                    alert('SUCCESSFULLY GOT AN ASSERTION! Open your browser console!')
+                    console.log('\n\n\nSUCCESSFULLY GOT AN ASSERTION!', getAssertionResponse)
                 })
                 .catch((error) => {
                     alert('Open your browser console!')
