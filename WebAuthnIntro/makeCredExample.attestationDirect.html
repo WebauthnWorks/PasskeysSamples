@@ -35,8 +35,8 @@
             var challenge = new Uint8Array(32);
             window.crypto.getRandomValues(challenge);
 
-            var serverID = 'Kosv9fPtkDoh4Oz7Yq/pVgWHS8HhdlCto5cR0aBoVMw='
-            var id = Uint8Array.from(window.atob(serverID), c=>c.charCodeAt(0))
+            var userID = 'Kosv9fPtkDoh4Oz7Yq/pVgWHS8HhdlCto5cR0aBoVMw='
+            var id = Uint8Array.from(window.atob(userID), c=>c.charCodeAt(0))
 
             var publicKey = {
                 challenge: challenge,
