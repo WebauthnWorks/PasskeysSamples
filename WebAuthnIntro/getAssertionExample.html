@@ -39,9 +39,9 @@
             var id = Uint8Array.from(window.atob(userID), c=>c.charCodeAt(0))
 
             var publicKey = {
-                challenge: challenge,
+                'challenge': challenge,
 
-                rp: {
+                'rp': {
                     'name': 'Example Inc.'
                 },
 
