@@ -61,14 +61,12 @@
 
             registerPassword({username, password, displayName})
                 .then((serverResponse) => {
-                    console.log(serverResponse)
                     if(serverResponse.status !== 'startFIDOEnrollment')
                         throw new Error('Error registering user! Server returned: ' + serverResponse.errorMessage);
 
                     return getMakeCredentialChallenge()
                 })
                 .then((makeCredChallenge) => {
-                    console.log(makeCredChallenge)
                     makeCredChallenge = preformatMakeCredReq(makeCredChallenge);
                     return navigator.credentials.create({ 'publicKey': makeCredChallenge })
                 })
