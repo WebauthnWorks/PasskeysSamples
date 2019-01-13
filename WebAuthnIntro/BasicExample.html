@@ -76,7 +76,7 @@
                     return makeCredentialResponse(newCredentialInfo)
                 })
                 .then((serverResponse) => {
-                    if(serverResponse !== 'ok')
+                    if(serverResponse.status !== 'ok')
                         throw new Error('Error registering user! Server returned: ' + serverResponse.errorMessage);
 
                     alert('Success!');
