@@ -37,7 +37,7 @@
                     <div class="card-body">
                         <form id="login" onsubmit="return false">
                             <input type="text" name="username" placeholder="Username"><br>
-                            <input type="password" name="username" placeholder="Password"><br>
+                            <input type="password" name="password" placeholder="Password"><br>
                             <button class="btn btn-primary" action="submit">Login</button>
                         </form>
                     </div><!-- .card-body --> 
@@ -82,7 +82,7 @@
                     alert('Success!');
                 })
                 .catch((error) => {
-                    alert('Open your browser console!')
+                    alert('FAIL' + error)
                     console.log('FAIL', error)
                 })
         })
@@ -116,7 +116,7 @@
                     alert('Success!');
                 })
                 .catch((error) => {
-                    alert('Open your browser console!')
+                    alert('FAIL' + error)
                     console.log('FAIL', error)
                 })
         })
