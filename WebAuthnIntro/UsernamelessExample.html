@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Passwordless Authentication Examples</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- Ensure use of most common Unicode characters -->
+    <meta charset="utf-8">
+    <link rel="stylesheet" href="https://unpkg.com/spectre.css/dist/spectre.min.css">
+    <!-- Considered an "experimental" feature -->
+    <link rel="stylesheet" href="https://unpkg.com/spectre.css/dist/spectre-exp.min.css">
+    <!-- Spectre.css icons are used -->
+    <link rel="stylesheet"href="https://unpkg.com/spectre.css/dist/spectre-icons.min.css"> 
+</head>
+<body>
+    <div class="container centered">
+        <div class="columns" style="margin-left: 15%; margin-right: 15%; margin-top: 10%;">
+            <div class="column col-2 text-center">
+            </div>
+
+            <div class="column col-4 text-center">
+                <div class="card">
+                    <h4>Register</h4>
+                    <div class="card-body">
+                        <form id="register" onsubmit="return false">
+                            <input type="text" name="username" placeholder="Username"><br>
+                            <input type="text" name="displayName" placeholder="DisplayName"><br>
+                            <button class="btn btn-primary" action="submit">Register</button>
+                        </form>
+                    </div><!-- .card-body --> 
+                </div><!-- .card -->
+            </div>
+
+             <div class="column col-4 text-center">
+                <div class="card">
+                    <h4>Login</h4>
+                    <div class="card-body">
+                        <form id="login" onsubmit="return false">
+                            <button class="btn btn-primary" action="submit">Login</button>
+                        </form>
+                    </div><!-- .card-body --> 
+                </div><!-- .card -->
+            </div>
+
+            <div class="column col-2 text-center">
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.getElementById('register').addEventListener('submit', function(event) {
+            event.preventDefault();
+
+            let username    = this.username.value;
+            let displayName = this.displayName.value;
+
+            startPasswordlessEnrollment({username, displayName})
+                .then((serverResponse) => {
+                    if(serverResponse.status !== 'startFIDOEnrollmentRK')
+                        throw new Error('Error registering user! Server returned: ' + serverResponse.errorMessage);
+
+                    return getMakeCredentialChallenge()
+                })
+                .then((makeCredChallenge) => {
+                    makeCredChallenge = preformatMakeCredReq(makeCredChallenge);
+                    return navigator.credentials.create({ 'publicKey': makeCredChallenge })
+                })
+                .then((newCredentialInfo) => {
+                    newCredentialInfo = publicKeyCredentialToJSON(newCredentialInfo)
+
+                    return makeCredentialResponse(newCredentialInfo)
+                })
+                .then((serverResponse) => {
+                    if(serverResponse.status !== 'ok')
+                        throw new Error('Error registering user! Server returned: ' + serverResponse.errorMessage);
+
+                    alert('Success!');
+                })
+                .catch((error) => {
+                    alert('FAIL' + error)
+                    console.log('FAIL', error)
+                })
+        })
+
+        document.getElementById('login').addEventListener('submit', function(event) {
+            event.preventDefault();
+            return getGetAssertionChallenge()
+                .then((getAssertionChallenge) => {
+                    getAssertionChallenge = preformatGetAssertReq(getAssertionChallenge);
+                    return navigator.credentials.get({ 'publicKey': getAssertionChallenge })
+                })
+                .then((newCredentialInfo) => {
+                    newCredentialInfo = publicKeyCredentialToJSON(newCredentialInfo)
+
+                    return getAssertionResponse(newCredentialInfo)
+                })
+                .then((serverResponse) => {
+                    if(serverResponse.status !== 'ok')
+                        throw new Error('Error registering user! Server returned: ' + serverResponse.errorMessage);
+
+                    alert('Success!');
+                })
+                .catch((error) => {
+                    alert('FAIL' + error)
+                    console.log('FAIL', error)
+                })
+        })
+    </script>
+    <script src="../lib/base64url-arraybuffer.js"></script>
+    <script src="../lib/cbor.js"></script>
+    <script src="../lib/helpers.js"></script>
+    <script src="../lib/server.sample.js"></script>
+</body>
+</html>
