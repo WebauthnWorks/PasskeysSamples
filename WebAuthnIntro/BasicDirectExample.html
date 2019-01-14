@@ -64,7 +64,7 @@
                     if(serverResponse.status !== 'startFIDOEnrollment')
                         throw new Error('Error registering user! Server returned: ' + serverResponse.errorMessage);
 
-                    return getMakeCredentialChallenge('direct')
+                    return getMakeCredentialChallenge({'attestation': 'direct'})
                 })
                 .then((makeCredChallenge) => {
                     makeCredChallenge = preformatMakeCredReq(makeCredChallenge);
