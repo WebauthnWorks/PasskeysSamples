@@ -59,7 +59,7 @@
 
             registerPassword({username, password, displayName})
                 .then((serverResponse) => {
-                    if(serverResponse.status !== 'startFIDOEnrollment')
+                    if(serverResponse.status !== 'startFIDOEnrolment')
                         throw new Error('Error registering user! Server returned: ' + serverResponse.errorMessage);
 
                     return getMakeCredentialChallenge()

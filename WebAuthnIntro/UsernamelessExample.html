@@ -53,9 +53,9 @@
             let username    = this.username.value;
             let displayName = this.displayName.value;
 
-            startPasswordlessEnrollment({username, displayName})
+            startUsernamelessEnrolment({username, displayName})
                 .then((serverResponse) => {
-                    if(serverResponse.status !== 'startFIDOEnrollmentRK')
+                    if(serverResponse.status !== 'startFIDOEnrolmentRK')
                         throw new Error('Error registering user! Server returned: ' + serverResponse.errorMessage);
 
                     return getMakeCredentialChallenge()
