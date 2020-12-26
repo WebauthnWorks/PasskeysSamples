@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>MakeCredential Platform Example with attestation Direct</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- Ensure use of most common Unicode characters -->
+    <meta charset="utf-8">
+    <link rel="stylesheet" href="https://unpkg.com/spectre.css/dist/spectre.min.css">
+    <!-- Considered an "experimental" feature -->
+    <link rel="stylesheet" href="https://unpkg.com/spectre.css/dist/spectre-exp.min.css" />
+    <!-- Spectre.css icons are used -->
+    <link rel="stylesheet"href="https://unpkg.com/spectre.css/dist/spectre-icons.min.css"> 
+</head>
+<body>
+    <div class="container centered">
+        <div class="columns" style="margin-left: 15%; margin-right: 15%; margin-top: 10%;">
+            <div class="column col-4 text-center">            
+            </div>
+
+            <div class="column col-4 text-center">
+                <div class="card">
+                    <div class="card-body">              
+                        <button class="btn btn-primary" onclick="makeCredsSample()">Make Credentials Platform with attestation Direct</button>
+                    </div><!-- .card-body --> 
+                </div><!-- .card -->
+            </div>
+
+            <div class="column col-4 text-center">            
+            </div>
+        </div>
+    </div>
+
+    <script>
+        var makeCredsSample = () => {
+            var challenge = new Uint8Array(32);
+            window.crypto.getRandomValues(challenge);
+
+            var userID = 'Kosv9fPtkDoh4Oz7Yq/pVgWHS8HhdlCto5cR0aBoVMw='
+            var id = Uint8Array.from(window.atob(userID), c=>c.charCodeAt(0))
+
+            var publicKey = {
+                'challenge': challenge,
+
+                'rp': {
+                    'name': 'Example Inc.'
+                },
+
+                'user': {
+                    'id': id,
+                    'name': 'alice@example.com',
+                    'displayName': 'Alice von Wunderland'
+                },
+
+                'pubKeyCredParams': [
+                    { 'type': 'public-key', 'alg': -7  },
+                    { 'type': 'public-key', 'alg': -257 }
+                ],
+
+                'authenticatorSelection': {
+                    'authenticatorAttachment': 'platform'
+                },
+
+                'attestation': 'direct'
+            }
+
+            navigator.credentials.create({ 'publicKey': publicKey })
+                .then((newCredentialInfo) => {
+                    alert('Open your browser console!')
+                    console.log('SUCCESS', newCredentialInfo)
+                    console.log('ClientDataJSON: ', bufferToString(newCredentialInfo.response.clientDataJSON))
+                    let attestationObject = CBOR.decode(newCredentialInfo.response.attestationObject);
+                    console.log('AttestationObject: ', attestationObject)
+                    let authData = parseAuthData(attestationObject.authData);
+                    console.log('AuthData: ', authData);
+                    console.log('CredID: ', bufToHex(authData.credID));
+                    console.log('AAGUID: ', bufToHex(authData.aaguid));
+                    console.log('PublicKey', CBOR.decode(authData.COSEPublicKey.buffer));
+                })
+                .catch((error) => {
+                    alert('Open your browser console!')
+                    console.log('FAIL', error)
+                })
+        }
+    </script>
+    <script src="../lib/cbor.js"></script>
+    <script src="../lib/helpers.js"></script>
+</body>
+</html>
