@@ -65,11 +65,14 @@
                     return getMakeCredentialChallenge({'attestation': 'direct'})
                 })
                 .then((makeCredChallenge) => {
+                    console.log("MAKE CRED REQUEST JSON: ", JSON.stringify(makeCredChallenge));
+
                     makeCredChallenge = preformatMakeCredReq(makeCredChallenge);
                     return navigator.credentials.create({ 'publicKey': makeCredChallenge })
                 })
                 .then((newCredentialInfo) => {
                     newCredentialInfo = publicKeyCredentialToJSON(newCredentialInfo)
+                    console.log("MAKE CRED RESULT JSON: ", JSON.stringify(newCredentialInfo));
 
                     return makeCredentialResponse(newCredentialInfo)
                 })
@@ -99,11 +102,14 @@
                     return getGetAssertionChallenge()
                 })
                 .then((getAssertionChallenge) => {
+                    console.log("GET ASSERTION REQUEST JSON: ", JSON.stringify(getAssertionChallenge));
                     getAssertionChallenge = preformatGetAssertReq(getAssertionChallenge);
                     return navigator.credentials.get({ 'publicKey': getAssertionChallenge })
                 })
                 .then((newCredentialInfo) => {
                     newCredentialInfo = publicKeyCredentialToJSON(newCredentialInfo)
+
+                    console.log("GET ASSERTION RESULT JSON: ", JSON.stringify(newCredentialInfo));
 
                     return getAssertionResponse(newCredentialInfo)
                 })
