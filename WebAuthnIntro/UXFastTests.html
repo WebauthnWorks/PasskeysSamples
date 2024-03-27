@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Awesome Store</title>
+    <script src="https://unpkg.com/htmx.org@1.9.10" integrity="sha384-D1Kt99CQMDuVetoL1lrYwg5t+9QdHe7NLX/SoJYkXDFfX37iInKRy5xLSi8nO7UC" crossorigin="anonymous"></script>
+    <link href="https://cdn.jsdelivr.net/npm/daisyui@2.6.0/dist/full.css" rel="stylesheet" type="text/css"/>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="min-h-screen bg-slate-50 text-white">
+    <main class="max-w-4xl mx-auto flex flex-row">
+        <section class="basis-3/4 flex p-4 m-3 rounded-lg shadow-lg mt-8 mr-6 text-black bg-white ">
+            <div class="min-w-full">
+                <h1 class="text-xl mb-4">Make Credential</h1>
+                <div class="p-4">
+                    <div class="flex items-center">
+                        <button type="submit" class="m-4 bg-green-500 text-white p-4 w-full rounded-lg" onclick="makeCredsSample()">Basic MakeCredential</button>
+                    </div>
+                    <div class="flex flex-row">
+                        <div class="basis-1/2 flex items-center"> 
+                            <button type="submit" class="m-4 bg-green-500 text-white p-4 w-full rounded-lg" onclick="makeCredential_Platform()">MakeCred Platform</button>
+                        </div>
+                        <div class="basis-1/2 flex items-center">
+                            <button type="submit" class="m-4 bg-green-500 text-white p-4 w-full rounded-lg" onclick="makeCredential_CrossPlatform()">MakeCred Cross Platform</button>
+                        </div>
+                    </div>
+                    <div class="flex flex-row">
+                        <div class="basis-1/2 flex items-center">
+                            <button type="submit" class="m-4 bg-green-500 text-white p-4 w-full rounded-lg" onclick="makeCredential_SecurityKey()">MakeCred Force Security Key</button>
+                        </div>
+                        <div class="basis-1/2 flex items-center"> 
+                            <button type="submit" class="m-4 bg-green-500 text-white p-4 w-full rounded-lg" onclick="makeCredential_HybridEnforced()">MakeCred Force Hybrid CaBLE</button>
+                        </div>
+                    </div>
+                </div>
+                <h1 class="text-xl mb-4 mt-5">Get Assertion (Run "Basic MakeCred" First)</h1>
+                <div class="p-4">
+                    <div class="flex items-center">
+                        <button type="submit" class="m-4 bg-green-500 text-white p-4 w-full rounded-lg" onclick="getAssertionSample()">Basic GetAssertion</button>
+                    </div>
+                    <div class="flex flex-row">
+                        <div class="basis-1/2 flex items-center">
+                            <button type="submit" class="m-4 bg-green-500 text-white p-4 w-full rounded-lg" onclick="getAssertion_SecurityKey()">GetAssertion Force Security Key</button>
+                        </div>
+                        <div class="basis-1/2 flex items-center"> 
+                            <button type="submit" class="m-4 bg-green-500 text-white p-4 w-full rounded-lg" onclick="makeCredential_Platform()">GetAssertion Force Platform</button>
+                        </div>
+                    </div>
+                    <div class="flex flex-row">
+                        <div class="basis-1/2 flex items-center">
+                            <button type="submit" class="m-4 bg-green-500 text-white p-4 w-full rounded-lg" onclick="getAssertion_RKEnforced()">GetAssertion Force RK</button>
+                        </div>
+                        <div class="basis-1/2 flex items-center">
+                            <button type="submit" class="m-4 bg-blue-500 text-white p-4 w-full rounded-lg" onclick="getAssertion_StartConditionalFlow()">Enable Conditional UI</button>
+                        </div>
+                    </div>
+                    <div class="flex items-center p-4">
+                        <label class="block min-w-full">
+                            <span class="after:content-['*'] after:ml-0.5 after:text-red-500 block text-sm font-medium text-slate-700">
+                                Conditional UI (press "Enable Conditional UI" to start)
+                            </span>
+                            <input type="email" name="email" class="mt-1 px-3 py-2 bg-white border shadow-sm border-slate-300 placeholder-slate-400 focus:outline-none focus:border-sky-500 focus:ring-sky-500 block w-full rounded-md sm:text-sm focus:ring-1" autocomplete="webauthn" placeholder="you@example.com" />
+                        </label>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+
+    <script>
+    /* ----- MakeCredential ----- */
+        var makeCredsSample = (skipAlert) => {
+            publicKey = generateMakeCredParams();
+            
+            return executeMakeCredential(publicKey, skipAlert)
+            .then((credID) => {
+                window.validCredID = credID
+            })
+        }
+
+        var makeCredential_SecurityKey = () => {
+            publicKey = generateMakeCredParams();
+            
+            publicKey.authenticatorSelection = {
+                "authenticatorAttachment": "cross-platform"
+            }
+
+            publicKey.hints = ["security-key"]
+
+            return executeMakeCredential(publicKey)
+        }
+
+        var makeCredential_HybridEnforced = () => {
+            publicKey = generateMakeCredParams();
+            
+            publicKey.authenticatorSelection = {
+                "authenticatorAttachment": "cross-platform"
+            }
+
+            publicKey.hints = ["hybrid"]
+
+            return executeMakeCredential(publicKey)
+        }
+
+        var makeCredential_CrossPlatform = () => {
+            publicKey = generateMakeCredParams();
+            
+            publicKey.authenticatorSelection = {
+                "authenticatorAttachment": "cross-platform"
+            }
+
+            return executeMakeCredential(publicKey)
+        }
+
+        var makeCredential_Platform = () => {
+            publicKey = generateMakeCredParams();
+            
+            publicKey.authenticatorSelection = {
+                "authenticatorAttachment": "platform"
+            }
+
+            publicKey.hints = ["client-device"]
+
+            return executeMakeCredential(publicKey)
+        }
+    /* ----- MakeCredential Ends----- */
+
+
+    /* ----- GetAssertion ----- */
+        var getAssertionSample = () => {
+            var publicKey = generateGetAssertion()
+            publicKey.allowCredentials = [
+                { type: "public-key", id: window.validCredID }
+            ]
+
+
+            return executeGetAssertion(publicKey)
+        }
+
+        var getAssertion_SecurityKey = () => {
+            var publicKey = generateGetAssertion()
+            publicKey.allowCredentials = [
+                { type: "public-key", id: window.validCredID, transports: ["cross-platform"]}
+            ]
+
+            publicKey.hints = ["security-key"]
+
+            return executeGetAssertion(publicKey, true)
+        }
+
+        var getAssertion_Platform = () => {
+            var publicKey = generateGetAssertion()
+            publicKey.allowCredentials = [
+                { type: "public-key", id: window.validCredID, transports: ["internal"]}
+            ]
+
+            publicKey.hints = ["client-device"]
+
+            return executeGetAssertion(publicKey, true)
+        }
+
+        var getAssertion_RKEnforced = () => {
+            var publicKey = generateGetAssertion()
+
+            return executeGetAssertion(publicKey, true)
+        }
+
+        var getAssertion_StartConditionalFlow = () => {
+            if (!PublicKeyCredential.isConditionalMediationAvailable ||
+                !PublicKeyCredential.isConditionalMediationAvailable()) {
+                return alert("Conditional UI is not supported on this browser.")
+            }
+
+            var publicKey = generateGetAssertion()
+
+            return executeGetAssertion(publicKey, true, true)
+        }
+    /* ----- GetAssertion Ends----- */
+    </script>
+    <script src="../lib/base64url-arraybuffer.js"></script>
+    <script src="../lib/cbor.js"></script>
+    <script src="../lib/helpers.js"></script>
+
+</body>
+</html>
