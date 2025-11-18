@@ -167,7 +167,7 @@
         var makeCred_extensions = () => {
             publicKey = testMakeCredsPayload();
 
-            publicKey.extensions = {
+            publicKey.extension = {
                 "credentialProtectionPolicy": "userVerificationOptional",
                 "hmacCreateSecret": true
             }
@@ -324,6 +324,7 @@
 
             if (result && typeof result.then === "function") {
                 return result.then(function (res) {
+                    console.log("MakeCredential result:", res);
                     if (respEl) {
                         respEl.value = safeStringify(res.makeCredResp);
                     }
