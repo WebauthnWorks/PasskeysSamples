@@ -7,8 +7,9 @@
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
 <body class="min-h-screen bg-slate-50 text-white">
-    <main class="max-w-4xl mx-auto flex flex-row">
-        <section class="basis-3/4 flex p-4 m-3 rounded-lg shadow-lg mt-8 mr-6 text-black bg-white ">
+    <main class="max-w-7xl mx-auto flex flex-row">
+        <!-- Left: Controls -->
+        <section class="basis-1/2 flex p-4 m-3 rounded-lg shadow-lg mt-8 mr-6 text-black bg-white">
             <div class="min-w-full">
                 <h1 class="text-xl mb-4">Make Credential</h1>
                 <div class="p-4">
@@ -32,6 +33,7 @@
                         </div>
                     </div>
                 </div>
+
                 <h1 class="text-xl mb-4 mt-5">Get Assertion (Run "Basic MakeCred" First)</h1>
                 <div class="p-4">
                     <div class="flex items-center">
@@ -42,7 +44,8 @@
                             <button type="submit" class="m-4 bg-green-500 text-white p-4 w-full rounded-lg" onclick="getAssertion_SecurityKey()">GetAssertion Force Security Key</button>
                         </div>
                         <div class="basis-1/2 flex items-center"> 
-                            <button type="submit" class="m-4 bg-green-500 text-white p-4 w-full rounded-lg" onclick="makeCredential_Platform()">GetAssertion Force Platform</button>
+                            <!-- Fixed: this now calls getAssertion_Platform -->
+                            <button type="submit" class="m-4 bg-green-500 text-white p-4 w-full rounded-lg" onclick="getAssertion_Platform()">GetAssertion Force Platform</button>
                         </div>
                     </div>
                     <div class="flex flex-row">
@@ -65,17 +68,42 @@
             </div>
         </section>
 
+        <!-- Right: Payload / Response Panel -->
+        <section class="basis-1/2 p-4 m-3 rounded-lg shadow-lg mt-8 bg-slate-900 text-slate-100 flex flex-col">
+            <h2 class="text-lg font-semibold mb-4">WebAuthn Debug</h2>
+            <div class="flex-1 flex flex-col mb-4">
+            <label for="sentPayload" class="block text-sm font-medium mb-1 text-slate-200">
+                Sent Payload
+            </label>
+            <textarea
+                id="sentPayload"
+                class="w-full flex-1 rounded-md bg-slate-800 text-xs font-mono p-2 border border-slate-700 resize"
+                placeholder="PublicKey options sent to navigator.credentials.create()/get() will appear here..."
+                spellcheck="false"
+            ></textarea>
+            </div>
+            <div class="flex-1 flex flex-col">
+            <label for="receivedResponse" class="block text-sm font-medium mb-1 text-slate-200">
+                Received Response
+            </label>
+            <textarea
+                id="receivedResponse"
+                class="w-full flex-1 rounded-md bg-slate-800 text-xs font-mono p-2 border border-slate-700 resize"
+                placeholder="Credential / assertion result will appear here..."
+                spellcheck="false"
+            ></textarea>
+            </div>
+        </section>
     </main>
-
 
     <script>
     /* ----- MakeCredential ----- */
-        var makeCredsSample = (skipAlert) => {
+        var makeCredsSample = () => {
             publicKey = generateMakeCredParams();
             
-            return executeMakeCredential(publicKey, skipAlert)
-            .then((credID) => {
-                window.validCredID = credID
+            return executeMakeCredential(publicKey, true)
+            .then((credResp) => {
+                window.validCredID = credResp.authData.credID
             })
         }
 
@@ -88,7 +116,7 @@
 
             publicKey.hints = ["security-key"]
 
-            return executeMakeCredential(publicKey)
+            return executeMakeCredential(publicKey, true)
         }
 
         var makeCredential_HybridEnforced = () => {
@@ -100,7 +128,7 @@
 
             publicKey.hints = ["hybrid"]
 
-            return executeMakeCredential(publicKey)
+            return executeMakeCredential(publicKey, true)
         }
 
         var makeCredential_CrossPlatform = () => {
@@ -110,7 +138,7 @@
                 "authenticatorAttachment": "cross-platform"
             }
 
-            return executeMakeCredential(publicKey)
+            return executeMakeCredential(publicKey, true)
         }
 
         var makeCredential_Platform = () => {
@@ -122,7 +150,7 @@
 
             publicKey.hints = ["client-device"]
 
-            return executeMakeCredential(publicKey)
+            return executeMakeCredential(publicKey, true)
         }
     /* ----- MakeCredential Ends----- */
 
@@ -134,12 +162,11 @@
                 { type: "public-key", id: window.validCredID }
             ]
 
-
             return executeGetAssertion(publicKey)
         }
 
         var getAssertion_SecurityKey = () => {
-            var publicKey = generateGetAssertion()
+            var publicKey = generateGetAssertion(true)
             publicKey.allowCredentials = [
                 { type: "public-key", id: window.validCredID, transports: ["cross-platform"]}
             ]
@@ -178,9 +205,145 @@
         }
     /* ----- GetAssertion Ends----- */
     </script>
+
     <script src="../lib/base64url-arraybuffer.js"></script>
     <script src="../lib/cbor.js"></script>
     <script src="../lib/helpers.js"></script>
+
+    <!-- Logging wrapper: shows sent options + responses in the right panel -->
+<!-- Logging wrapper: shows sent options + responses in the right panel -->
+<script>
+    (function () {
+        const sentEl = document.getElementById("sentPayload");
+        const respEl = document.getElementById("receivedResponse");
+
+        if (!window.executeMakeCredential || !window.executeGetAssertion) {
+            // helpers.js not loaded or API changed
+            return;
+        }
+
+        const originalExecuteMakeCredential = window.executeMakeCredential;
+        const originalExecuteGetAssertion = window.executeGetAssertion;
+
+        function encodeBytes(value) {
+            // Try to use base64url-arraybuffer if available
+            try {
+                if (typeof base64url !== "undefined" && typeof base64url.encode === "function") {
+                    let ab;
+
+                    if (value instanceof ArrayBuffer) {
+                        ab = value;
+                    } else if (ArrayBuffer.isView(value)) {
+                        const u8 = new Uint8Array(value.buffer, value.byteOffset, value.byteLength);
+                        ab = u8.buffer.slice(u8.byteOffset || 0, (u8.byteOffset || 0) + u8.byteLength);
+                    } else {
+                        return String(value);
+                    }
+
+                    const b64 = base64url.encode(ab);
+                    return `base64url:${b64} (${ab.byteLength} bytes)`;
+                }
+            } catch (e) {
+                // fall through
+            }
+
+            // Fallback if base64url is not available
+            const len = value && value.byteLength ? value.byteLength : "?";
+            return `TypedArray(${len} bytes)`;
+        }
+
+        function safeStringify(value) {
+            try {
+                return JSON.stringify(
+                    value,
+                    function (_key, val) {
+                        // Binary blobs → base64url
+                        if (val instanceof ArrayBuffer || ArrayBuffer.isView(val)) {
+                            return encodeBytes(val);
+                        }
+
+                        // Light handling for PublicKeyCredential objects
+                        if (
+                            val &&
+                            typeof val === "object" &&
+                            val.constructor &&
+                            val.constructor.name === "PublicKeyCredential"
+                        ) {
+                            return {
+                                id: val.id,
+                                type: val.type,
+                                rawId: val.rawId ? encodeBytes(val.rawId) : undefined,
+                                responseType:
+                                    val.response && val.response.constructor
+                                        ? val.response.constructor.name
+                                        : undefined,
+                                // You can add more fields if you want:
+                                // clientDataJSON: val.response?.clientDataJSON && encodeBytes(val.response.clientDataJSON),
+                                // authenticatorData: val.response?.authenticatorData && encodeBytes(val.response.authenticatorData),
+                                // signature: val.response?.signature && encodeBytes(val.response.signature),
+                                // userHandle: val.response?.userHandle && encodeBytes(val.response.userHandle),
+                            };
+                        }
+
+                        return val;
+                    },
+                    2
+                );
+            } catch (e) {
+                return String(value);
+            }
+        }
+
+        window.executeMakeCredential = function (publicKey, skipAlert) {
+            if (sentEl) {
+                sentEl.value = safeStringify(publicKey);
+            }
+
+            const result = originalExecuteMakeCredential.call(this, publicKey, skipAlert);
+
+            if (result && typeof result.then === "function") {
+                return result.then(function (res) {
+                    if (respEl) {
+                        respEl.value = safeStringify(res.makeCredResp);
+                    }
+                    return res;
+                });
+            } else {
+                if (respEl) {
+                    respEl.value = safeStringify(result);
+                }
+                return result;
+            }
+        };
+
+        window.executeGetAssertion = function (publicKey, skipAlert, useConditional) {
+            if (sentEl) {
+                sentEl.value = safeStringify(publicKey);
+            }
+
+            const result = originalExecuteGetAssertion.call(
+                this,
+                publicKey,
+                skipAlert,
+                useConditional
+            );
+
+            if (result && typeof result.then === "function") {
+                return result.then(function (res) {
+                    if (respEl) {
+                        respEl.value = safeStringify(res);
+                    }
+                    return res;
+                });
+            } else {
+                if (respEl) {
+                    respEl.value = safeStringify(result);
+                }
+                return result;
+            }
+        };
+    })();
+</script>
 
 </body>
 </html>
