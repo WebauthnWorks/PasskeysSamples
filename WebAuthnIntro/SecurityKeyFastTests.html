@@ -1,0 +1,370 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Security Key Fast Tests</title>
+    <script src="https://unpkg.com/htmx.org@1.9.10" integrity="sha384-D1Kt99CQMDuVetoL1lrYwg5t+9QdHe7NLX/SoJYkXDFfX37iInKRy5xLSi8nO7UC" crossorigin="anonymous"></script>
+    <link href="https://cdn.jsdelivr.net/npm/daisyui@2.6.0/dist/full.css" rel="stylesheet" type="text/css"/>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="min-h-screen bg-slate-50 text-white">
+    <main class="max-w-7xl mx-auto flex flex-row">
+        <!-- Left: Controls -->
+        <section class="basis-1/2 flex p-4 m-3 rounded-lg shadow-lg mt-8 mr-6 text-black bg-white">
+
+
+            <div class="min-w-full">
+                <div class="p-4">
+                    <h2 class="text-2xl font-semibold mb-2">Security Key Fast Tests</h2>
+                    <p class="text-sm text-gray-600">Quick tests for various WebAuthn flows using security keys</p>
+                </div>
+                <h1 class="text-xl mb-4">Make Credential</h1>
+                <div class="p-4">
+                    <div class="flex items-center">
+                        <button type="submit" class="m-4 bg-green-500 text-white p-4 w-full rounded-lg" onclick="makeCred_uv_discouraged()">MakeCredential UV Discouraged</button>
+                        <div class="flex items-center justify-center w-24">
+                            <span id="makeCredStatus_uvDiscouraged" class="text-sm font-semibold"></span>
+                        </div>
+                    </div>
+                    <div class="flex items-center">
+                        <button type="submit" class="m-4 bg-green-500 text-white p-4 w-full rounded-lg" onclick="makeCred_att_direct()">Basic MakeCredential UV Required</button>
+                        <div class="flex items-center justify-center w-24">
+                            <span id="makeCredStatus_attDirect" class="text-sm font-semibold"></span>
+                        </div>
+                    </div>
+                    <div class="flex items-center">
+                        <button type="submit" class="m-4 bg-green-500 text-white p-4 w-full rounded-lg" onclick="makeCred_att_none()">MakeCredential Att None</button>
+                        <div class="flex items-center justify-center w-24">
+                            <span id="makeCredStatus_attNone" class="text-sm font-semibold"></span>
+                        </div>
+                    </div>
+                    <div class="flex items-center">
+                        <button type="submit" class="m-4 bg-green-500 text-white p-4 w-full rounded-lg" onclick="makeCred_extensions()">MakeCredential with Extensions</button>
+                        <div class="flex items-center justify-center w-24">
+                            <span id="makeCredStatus_extensions" class="text-sm font-semibold"></span>
+                        </div>
+                    </div>
+                </div>
+
+
+                <h1 class="text-xl mb-4 mt-5">Get Assertion (Run "Basic MakeCred" First)</h1>
+                <div class="p-4">
+                    <div class="flex items-center">
+                        <button type="submit" class="m-4 bg-green-500 text-white p-4 w-full rounded-lg" onclick="getAssertion_UVDiscouraged()">GetAssertion UV Discouraged</button>
+                        <div class="flex items-center justify-center w-24">
+                            <span id="getAssertionStatus_uvDiscouraged" class="text-sm font-semibold"></span>
+                        </div>
+                    </div>
+                    
+                    <div class="flex items-center">
+                        <button type="submit" class="m-4 bg-green-500 text-white p-4 w-full rounded-lg" onclick="getAssertion_UVRequired()">GetAssertion UV Required</button>
+                        <div class="flex items-center justify-center w-24">
+                            <span id="getAssertionStatus_uvRequired" class="text-sm font-semibold"></span>
+                        </div>
+                    </div>
+
+                    <div class="flex items-center">
+                        <button type="submit" class="m-4 bg-green-500 text-white p-4 w-full rounded-lg" onclick="getAssertion_RKEnforced()">GetAssertion RK Enforced (No allowCredentials)</button>
+                        <div class="flex items-center justify-center w-24">
+                            <span id="getAssertionStatus_rkEnforced" class="text-sm font-semibold"></span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Right: Payload / Response Panel -->
+        <section class="basis-1/2 p-4 m-3 rounded-lg shadow-lg mt-8 bg-slate-900 text-slate-100 flex flex-col">
+            <h2 class="text-lg font-semibold mb-4">WebAuthn Debug</h2>
+            <div class="flex-1 flex flex-col mb-4">
+            <label for="sentPayload" class="block text-sm font-medium mb-1 text-slate-200">
+                Sent Payload
+            </label>
+            <textarea
+                id="sentPayload"
+                class="w-full flex-1 rounded-md bg-slate-800 text-xs font-mono p-2 border border-slate-700 resize"
+                placeholder="PublicKey options sent to navigator.credentials.create()/get() will appear here..."
+                spellcheck="false"
+            ></textarea>
+            </div>
+            <div class="flex-1 flex flex-col">
+            <label for="receivedResponse" class="block text-sm font-medium mb-1 text-slate-200">
+                Received Response
+            </label>
+            <textarea
+                id="receivedResponse"
+                class="w-full flex-1 rounded-md bg-slate-800 text-xs font-mono p-2 border border-slate-700 resize"
+                placeholder="Credential / assertion result will appear here..."
+                spellcheck="false"
+            ></textarea>
+            </div>
+        </section>
+    </main>
+
+    <script>
+    /* ----- MakeCredential ----- */
+        var testMakeCredsPayload = () => {
+            publicKey = generateMakeCredParams();
+
+            publicKey.authenticatorSelection = {
+                "authenticatorAttachment": "cross-platform"
+            }
+
+            publicKey.hints = ["security-key"]
+
+            // Consistent user ID for testing. Will override the random one generated in generateMakeCredParams()
+            publicKey.user.id = new Uint8Array([1,2,3,4,5]);
+
+            publicKey.attestation = "direct";
+
+            return publicKey;
+        }
+
+        var testMakeCredExecute = (publicKey, elementId) => {
+            return executeMakeCredential(publicKey, true)
+            .then((credResp) => {
+                window.validCredID = credResp.authData.credID
+                setStatus(`makeCredStatus_${elementId}`, "Success", false)
+            })
+            .catch((err) => {
+                console.error(err)
+                setStatus(`makeCredStatus_${elementId}`, "Error", true)
+            })
+        }
+
+        var setStatus = (elementId, statusText, isError) => {
+            var el = document.getElementById(elementId);
+            el.textContent = statusText;
+            el.style.color = isError ? "red" : "green";
+        }
+        
+        var makeCred_uv_discouraged = () => {
+            publicKey = testMakeCredsPayload();
+            
+            publicKey.authenticatorSelection.userVerification = "discouraged";
+
+            return testMakeCredExecute(publicKey, "uvDiscouraged")
+        }
+
+        var makeCred_att_none = () => {
+            publicKey = testMakeCredsPayload();
+
+            publicKey.attestation = "none";
+
+            return testMakeCredExecute(publicKey, "attNone")
+        }
+
+        var makeCred_att_direct = () => {
+            publicKey = testMakeCredsPayload();
+
+            publicKey.attestation = "direct";
+
+            publicKey.authenticatorSelection.userVerification = "required";
+
+
+            return testMakeCredExecute(publicKey, "attDirect")
+        }
+
+        var makeCred_extensions = () => {
+            publicKey = testMakeCredsPayload();
+
+            publicKey.extensions = {
+                "credentialProtectionPolicy": "userVerificationOptional",
+                "hmacCreateSecret": true
+            }
+
+            return testMakeCredExecute(publicKey, "extensions")
+        }
+    /* ----- MakeCredential Ends----- */
+
+
+    /* ----- GetAssertion ----- */
+        var testGetAssertionPayload = () => {
+            var publicKey = generateGetAssertion()
+            publicKey.allowCredentials = [
+                { type: "public-key", id: window.validCredID, transports: ["cross-platform"]}
+            ]
+
+            publicKey.hints = ["security-key"]
+
+            return publicKey
+        }
+
+        var testGetAssertionExecute = (publicKey, elementId) => {
+            return executeGetAssertion(publicKey, true)
+            .then(() => {
+                setStatus(`getAssertionStatus_${elementId}`, "Success", false)
+            })
+            .catch((err) => {
+                console.error(err)
+                setStatus(`getAssertionStatus_${elementId}`, "Error", true)
+            })
+        }
+
+
+        var getAssertion_UVDiscouraged = () => {
+            var publicKey = testGetAssertionPayload();
+
+            publicKey.userVerification = "discouraged";
+
+            return testGetAssertionExecute(publicKey, "uvDiscouraged")
+        }
+
+        var getAssertion_UVRequired = () => {
+            var publicKey = testGetAssertionPayload();
+
+            publicKey.userVerification = "required";
+
+            return testGetAssertionExecute(publicKey, "uvRequired")
+        }
+
+        var getAssertion_RKEnforced = () => {
+            var publicKey = testGetAssertionPayload();
+
+            delete publicKey.allowCredentials;
+
+            return testGetAssertionExecute(publicKey, "rkEnforced")
+        }
+        
+    /* ----- GetAssertion Ends----- */
+    </script>
+
+    <script src="../lib/base64url-arraybuffer.js"></script>
+    <script src="../lib/cbor.js"></script>
+    <script src="../lib/helpers.js"></script>
+
+<!-- Logging wrapper: shows sent options + responses in the right panel -->
+<script>
+    (function () {
+        const sentEl = document.getElementById("sentPayload");
+        const respEl = document.getElementById("receivedResponse");
+
+        if (!window.executeMakeCredential || !window.executeGetAssertion) {
+            // helpers.js not loaded or API changed
+            return;
+        }
+
+        const originalExecuteMakeCredential = window.executeMakeCredential;
+        const originalExecuteGetAssertion = window.executeGetAssertion;
+
+        function encodeBytes(value) {
+            // Try to use base64url-arraybuffer if available
+            try {
+                if (typeof base64url !== "undefined" && typeof base64url.encode === "function") {
+                    let ab;
+
+                    if (value instanceof ArrayBuffer) {
+                        ab = value;
+                    } else if (ArrayBuffer.isView(value)) {
+                        const u8 = new Uint8Array(value.buffer, value.byteOffset, value.byteLength);
+                        ab = u8.buffer.slice(u8.byteOffset || 0, (u8.byteOffset || 0) + u8.byteLength);
+                    } else {
+                        return String(value);
+                    }
+
+                    const b64 = base64url.encode(ab);
+                    return `base64url:${b64} (${ab.byteLength} bytes)`;
+                }
+            } catch (e) {
+                // fall through
+            }
+
+            // Fallback if base64url is not available
+            const len = value && value.byteLength ? value.byteLength : "?";
+            return `TypedArray(${len} bytes)`;
+        }
+
+        function safeStringify(value) {
+            try {
+                return JSON.stringify(
+                    value,
+                    function (_key, val) {
+                        // Binary blobs → base64url
+                        if (val instanceof ArrayBuffer || ArrayBuffer.isView(val)) {
+                            return encodeBytes(val);
+                        }
+
+                        // Light handling for PublicKeyCredential objects
+                        if (
+                            val &&
+                            typeof val === "object" &&
+                            val.constructor &&
+                            val.constructor.name === "PublicKeyCredential"
+                        ) {
+                            return {
+                                id: val.id,
+                                type: val.type,
+                                rawId: val.rawId ? encodeBytes(val.rawId) : undefined,
+                                responseType:
+                                    val.response && val.response.constructor
+                                        ? val.response.constructor.name
+                                        : undefined,
+                                // You can add more fields if you want:
+                                // clientDataJSON: val.response?.clientDataJSON && encodeBytes(val.response.clientDataJSON),
+                                // authenticatorData: val.response?.authenticatorData && encodeBytes(val.response.authenticatorData),
+                                // signature: val.response?.signature && encodeBytes(val.response.signature),
+                                // userHandle: val.response?.userHandle && encodeBytes(val.response.userHandle),
+                            };
+                        }
+
+                        return val;
+                    },
+                    2
+                );
+            } catch (e) {
+                return String(value);
+            }
+        }
+
+        window.executeMakeCredential = function (publicKey, skipAlert) {
+            if (sentEl) {
+                sentEl.value = safeStringify(publicKey);
+            }
+
+            const result = originalExecuteMakeCredential.call(this, publicKey, skipAlert);
+
+            if (result && typeof result.then === "function") {
+                return result.then(function (res) {
+                    if (respEl) {
+                        respEl.value = safeStringify(res.makeCredResp);
+                    }
+                    return res;
+                });
+            } else {
+                if (respEl) {
+                    respEl.value = safeStringify(result);
+                }
+                return result;
+            }
+        };
+
+        window.executeGetAssertion = function (publicKey, skipAlert, useConditional) {
+            if (sentEl) {
+                sentEl.value = safeStringify(publicKey);
+            }
+
+            const result = originalExecuteGetAssertion.call(
+                this,
+                publicKey,
+                skipAlert,
+                useConditional
+            );
+
+            if (result && typeof result.then === "function") {
+                return result.then(function (res) {
+                    if (respEl) {
+                        respEl.value = safeStringify(res);
+                    }
+                    return res;
+                });
+            } else {
+                if (respEl) {
+                    respEl.value = safeStringify(result);
+                }
+                return result;
+            }
+        };
+    })();
+</script>
+
+</body>
+</html>
