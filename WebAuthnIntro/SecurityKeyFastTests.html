@@ -168,8 +168,8 @@
             publicKey = testMakeCredsPayload();
 
             publicKey.extension = {
-                "credentialProtectionPolicy": "userVerificationOptional",
-                "hmacCreateSecret": true
+                "hmacCreateSecret": true,
+                "credentialProtectionPolicy": "userVerificationOptional"
             }
 
             return testMakeCredExecute(publicKey, "extensions")
