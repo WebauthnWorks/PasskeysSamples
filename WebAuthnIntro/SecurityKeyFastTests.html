@@ -43,6 +43,24 @@
                             <span id="makeCredStatus_extensions" class="text-sm font-semibold"></span>
                         </div>
                     </div>
+                    <div class="flex items-center">
+                        <button type="submit" class="m-4 bg-green-500 text-white p-4 w-full rounded-lg" onclick="makeCred_display_name_empty()">MakeCredential with empty DisplayName</button>
+                        <div class="flex items-center justify-center w-24">
+                            <span id="makeCredStatus_displayNameEmpty" class="text-sm font-semibold"></span>
+                        </div>
+                    </div>
+                    <div class="flex items-center">
+                        <button type="submit" class="m-4 bg-green-500 text-white p-4 w-full rounded-lg" onclick="makeCred_exclude_cred_wrong_type()">MakeCredential with wrong ExcludeList type type</button>
+                        <div class="flex items-center justify-center w-24">
+                            <span id="makeCredStatus_wrongExcludeType" class="text-sm font-semibold"></span>
+                        </div>
+                    </div>
+                    <div class="flex items-center">
+                        <button type="submit" class="m-4 bg-green-500 text-white p-4 w-full rounded-lg" onclick="makeCred_exclude_cred_transports()">MakeCredential with ExcludeList containing trasports.</button>
+                        <div class="flex items-center justify-center w-24">
+                            <span id="makeCredStatus_excludeCredTransports" class="text-sm font-semibold"></span>
+                        </div>
+                    </div>
                 </div>
 
 
@@ -56,7 +74,7 @@
                     </div>
                     
                     <div class="flex items-center">
-                        <button type="submit" class="m-4 bg-green-500 text-white p-4 w-full rounded-lg" onclick="getAssertion_UVRequired()">GetAssertion UV Required</button>
+                        <button type="submit" class="m-4 bg-green-500 text-white p-4 w-full rounded-lg" onclick="getAssertion_UVRequired()">GetAssertion UV Required (with transports)</button>
                         <div class="flex items-center justify-center w-24">
                             <span id="getAssertionStatus_uvRequired" class="text-sm font-semibold"></span>
                         </div>
@@ -66,6 +84,13 @@
                         <button type="submit" class="m-4 bg-green-500 text-white p-4 w-full rounded-lg" onclick="getAssertion_RKEnforced()">GetAssertion RK Enforced (No allowCredentials)</button>
                         <div class="flex items-center justify-center w-24">
                             <span id="getAssertionStatus_rkEnforced" class="text-sm font-semibold"></span>
+                        </div>
+                    </div>
+
+                    <div class="flex items-center">
+                        <button type="submit" class="m-4 bg-green-500 text-white p-4 w-full rounded-lg" onclick="getAssertion_allow_credential_wrong_type()">GetAssertion allowList with wrong type</button>
+                        <div class="flex items-center justify-center w-24">
+                            <span id="getAssertionStatus_wrongAllowType" class="text-sm font-semibold"></span>
                         </div>
                     </div>
                 </div>
@@ -103,7 +128,7 @@
     <script>
     /* ----- MakeCredential ----- */
         var testMakeCredsPayload = () => {
-            publicKey = generateMakeCredParams();
+            var publicKey = generateMakeCredParams();
 
             publicKey.authenticatorSelection = {
                 "authenticatorAttachment": "cross-platform"
@@ -138,15 +163,37 @@
         }
         
         var makeCred_uv_discouraged = () => {
-            publicKey = testMakeCredsPayload();
+            var publicKey = testMakeCredsPayload();
             
             publicKey.authenticatorSelection.userVerification = "discouraged";
 
             return testMakeCredExecute(publicKey, "uvDiscouraged")
         }
 
+        var makeCred_display_name_empty = () => {
+            var publicKey = testMakeCredsPayload();
+            
+            publicKey.user.displayName = ""
+
+            return testMakeCredExecute(publicKey, "displayNameEmpty")
+        }
+
+        var makeCred_exclude_cred_transports = () => {
+            var publicKey = testMakeCredsPayload();
+            
+            publicKey.excludeCredentials = [
+                {
+                    type: "public-key",
+                    id: new Uint8Array([0,1,2,3,4,5,6,6,7,8,9,10,11,12,13,14,15,16,17,18,19]),
+                    transports: [ "usb", "nfc", "ble", "smart-card"]
+                }
+            ]
+
+            return testMakeCredExecute(publicKey, "excludeCredTransports")
+        }
+
         var makeCred_att_none = () => {
-            publicKey = testMakeCredsPayload();
+            var publicKey = testMakeCredsPayload();
 
             publicKey.attestation = "none";
 
@@ -154,7 +201,7 @@
         }
 
         var makeCred_att_direct = () => {
-            publicKey = testMakeCredsPayload();
+            var publicKey = testMakeCredsPayload();
 
             publicKey.attestation = "direct";
 
@@ -165,7 +212,7 @@
         }
 
         var makeCred_extensions = () => {
-            publicKey = testMakeCredsPayload();
+            var publicKey = testMakeCredsPayload();
 
             publicKey.extension = {
                 "hmacCreateSecret": true,
@@ -181,7 +228,12 @@
         var testGetAssertionPayload = () => {
             var publicKey = generateGetAssertion()
             publicKey.allowCredentials = [
-                { type: "public-key", id: window.validCredID, transports: ["cross-platform"]}
+                {
+                    type: "public-key",
+                    id: window.validCredID,
+                    transports: [ "usb", "nfc", "ble", "smart-card"]
+
+                }
             ]
 
             publicKey.hints = ["security-key"]
@@ -223,6 +275,20 @@
             delete publicKey.allowCredentials;
 
             return testGetAssertionExecute(publicKey, "rkEnforced")
+        }
+        
+        var getAssertion_allow_credential_wrong_type = () => {
+            var publicKey = testGetAssertionPayload();
+
+            publicKey.allowCredentials = [
+                {
+                    type: "racoon-key",
+                    id: publicKey.allowCredentials[0].id
+                },
+                publicKey.allowCredentials[0]
+            ]
+
+            return testGetAssertionExecute(publicKey, "wrongAllowType")
         }
         
     /* ----- GetAssertion Ends----- */
@@ -366,6 +432,9 @@
         };
     })();
 </script>
+
+Test DisplayName/Name missing
+Test exclude/allow to support different types
 
 </body>
 </html>
